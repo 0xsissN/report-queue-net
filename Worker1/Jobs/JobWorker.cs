@@ -3,14 +3,28 @@
     public class JobWorker: BackgroundService
     {
         private readonly JobProcessor _processor;
-        public JobWorker(JobProcessor processor) => _processor = processor;
+        private readonly JobClaimer _claimer;
+        public JobWorker(JobProcessor processor, JobClaimer claimer) 
+        { 
+            _processor = processor;
+            _claimer = claimer;
+        }
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            Console.WriteLine("Looking for jobs...");
+            var workerId = Guid.NewGuid().ToString();
 
-            await _processor.ProcessAsync(stoppingToken);
+            while(!stoppingToken.IsCancellationRequested)
+            {
+                var job = await _claimer.ClaimAsync(workerId, stoppingToken);
+                
+                if(job is null)
+                {
+                    await Task.Delay(1000, stoppingToken);
+                    continue;
+                }
 
-            await Task.Delay(1000, stoppingToken);
+                await _processor.ProcessAsync(job, stoppingToken);
+            }
         }
     }
 }

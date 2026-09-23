@@ -1,8 +1,10 @@
-﻿namespace Worker1.Jobs
+﻿using Domain.Entities;
+
+namespace Worker1.Jobs
 {
     public class JobProcessor
     {
-        public async Task ProcessAsync(CancellationToken cancellationToken)
+        public async Task ProcessAsync(Job? job, CancellationToken cancellationToken)
         {
             Console.WriteLine("Processing job...");
 

@@ -14,6 +14,8 @@ namespace Domain.Entities
         public DateTime? StartedAt { get; set; }
         public DateTime? CompletedAt { get; set; }
         public DateTime? AvailableAt { get; set; }
+        public DateTime? LockedAt { get; set; }
+        public string? LockedBy { get; set; }
         public string? Error { get; set; }
     }
 }
