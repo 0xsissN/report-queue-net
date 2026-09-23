@@ -1,4 +1,4 @@
-using Domain.Data;
+using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 

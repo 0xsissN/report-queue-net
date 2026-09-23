@@ -1,5 +1,9 @@
 <Solution>
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+  </Folder>
   <Project Path="Api/Api.csproj" />
   <Project Path="Domain/Domain.csproj" />
+  <Project Path="Infrastructure/Infrastructure.csproj" Id="02a27e29-a62e-4377-8223-f7b0969a0667" />
   <Project Path="Worker1/Worker1.csproj" Id="6abad544-489f-487a-9e72-1d843b57ed28" />
 </Solution>

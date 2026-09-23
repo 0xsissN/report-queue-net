@@ -1,7 +1,7 @@
 ﻿using Domain.Contracts;
 using Domain.Entities;
-using Domain.Data;
 using Domain.Enum;
+using Infrastructure.Data;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Controllers
@@ -12,7 +12,7 @@ namespace Api.Controllers
     {
         private readonly DataContext _context;
         public JobController(DataContext context) => _context = context;
-        
+
         [HttpPost]
         public async Task<IActionResult> Create(CreateJobRequest request, CancellationToken cancellationToken)
         {

@@ -1,29 +1,28 @@
 ﻿namespace Worker1.Jobs
 {
-    public class JobWorker: BackgroundService
+    public class JobWorker : BackgroundService
     {
-        private readonly JobProcessor _processor;
-        private readonly JobClaimer _claimer;
-        public JobWorker(JobProcessor processor, JobClaimer claimer) 
-        { 
-            _processor = processor;
-            _claimer = claimer;
-        }
+        private readonly IServiceScopeFactory _scopeFactory;
+        public JobWorker(IServiceScopeFactory scopeFactory) => _scopeFactory = scopeFactory;
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             var workerId = Guid.NewGuid().ToString();
 
-            while(!stoppingToken.IsCancellationRequested)
+            while (!stoppingToken.IsCancellationRequested)
             {
-                var job = await _claimer.ClaimAsync(workerId, stoppingToken);
-                
-                if(job is null)
+                using var scope = _scopeFactory.CreateScope();
+
+                var claimer = scope.ServiceProvider.GetRequiredService<JobClaimer>();
+
+                var job = await claimer.ClaimAsync(workerId, stoppingToken);
+
+                if (job is null)
                 {
                     await Task.Delay(1000, stoppingToken);
                     continue;
                 }
 
-                await _processor.ProcessAsync(job, stoppingToken);
+                Console.WriteLine($"-----------------------Worker {workerId} claimed job {job.Id}");
             }
         }
     }

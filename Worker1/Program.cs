@@ -1,8 +1,14 @@
+using Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 using Worker1.Jobs;
 
 var builder = Host.CreateApplicationBuilder(args);
 
-builder.Services.AddSingleton<JobProcessor>();
+var connectionString = builder.Configuration.GetConnectionString("Connection");
+
+builder.Services.AddDbContext<DataContext>(options => options.UseSqlServer(connectionString));
+
+builder.Services.AddScoped<JobClaimer>();
 
 builder.Services.AddHostedService<JobWorker>();
 

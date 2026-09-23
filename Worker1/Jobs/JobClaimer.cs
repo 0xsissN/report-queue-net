@@ -1,10 +1,7 @@
-﻿using Domain.Data;
-using Domain.Entities;
+﻿using Domain.Entities;
 using Domain.Enum;
+using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Worker1.Jobs
 {
@@ -14,9 +11,15 @@ namespace Worker1.Jobs
         public JobClaimer(DataContext context) => _context = context;
         public async Task<Job?> ClaimAsync(string workerId, CancellationToken cancellationToken)
         {
+            await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
+
             var job = await _context.Job
-                .Where(x => x.Status == JobStatus.Queued)
-                .OrderBy(x => x.CreatedAt)
+                .FromSqlRaw("""
+                    SELECT TOP (1) *
+                    FROM [Job] WITH (UPDLOCK, READPAST, ROWLOCK)
+                    WHERE [Status] = 0
+                    ORDER BY [CreatedAt]
+                """)
                 .FirstOrDefaultAsync(cancellationToken);
 
             if (job is null) return null;
@@ -28,6 +31,8 @@ namespace Worker1.Jobs
             job.Attempts++;
 
             await _context.SaveChangesAsync(cancellationToken);
+
+            await transaction.CommitAsync(cancellationToken);
 
             return job;
         }
