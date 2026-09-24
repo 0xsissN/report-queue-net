@@ -9,6 +9,7 @@ var connectionString = builder.Configuration.GetConnectionString("Connection");
 builder.Services.AddDbContext<DataContext>(options => options.UseSqlServer(connectionString));
 
 builder.Services.AddScoped<JobClaimer>();
+builder.Services.AddScoped<JobProcessor>();
 
 builder.Services.AddHostedService<JobWorker>();
 

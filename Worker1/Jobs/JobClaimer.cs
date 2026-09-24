@@ -17,7 +17,7 @@ namespace Worker1.Jobs
                 .FromSqlRaw("""
                     SELECT TOP (1) *
                     FROM [Job] WITH (UPDLOCK, READPAST, ROWLOCK)
-                    WHERE [Status] = 0
+                    WHERE [Status] = 0 AND ([AvailableAt] IS NULL OR [AvailableAt] <= SYSUTCDATETIME())
                     ORDER BY [CreatedAt]
                 """)
                 .FirstOrDefaultAsync(cancellationToken);
@@ -35,6 +35,25 @@ namespace Worker1.Jobs
             await transaction.CommitAsync(cancellationToken);
 
             return job;
+        }
+        public async Task RetryAsync(Job job, string error, CancellationToken cancellationToken)
+        {
+            if (job.Attempts >= job.MaxAttempts)
+            {
+                job.Status = JobStatus.Failed;
+                job.Error = error;
+                job.CompletedAt = DateTime.UtcNow;
+            }
+            else
+            {
+                var dailySecond = Math.Pow(2, job.Attempts);
+
+                job.Status = JobStatus.Queued;
+                job.Error = error;
+                job.AvailableAt = DateTime.UtcNow.AddSeconds(dailySecond);
+            }
+
+            await _context.SaveChangesAsync(cancellationToken);
         }
     }
 }

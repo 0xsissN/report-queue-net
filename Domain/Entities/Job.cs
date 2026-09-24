@@ -7,6 +7,7 @@ namespace Domain.Entities
         public Guid Id { get; set; }
         public string Type { get; set; } = null!;
         public string Payload { get; set; } = null!;
+        public string? IdempotencyKey { get; set; }
         public JobStatus Status { get; set; }
         public int Attempts { get; set; }
         public int MaxAttempts { get; set; }

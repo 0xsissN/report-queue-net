@@ -3,6 +3,7 @@ using Domain.Entities;
 using Domain.Enum;
 using Infrastructure.Data;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace Api.Controllers
 {
@@ -16,11 +17,16 @@ namespace Api.Controllers
         [HttpPost]
         public async Task<IActionResult> Create(CreateJobRequest request, CancellationToken cancellationToken)
         {
+            var existingJob = await _context.Job.FirstOrDefaultAsync(x => x.IdempotencyKey == request.IdempotencyKey);
+
+            if (existingJob is not null) return Ok(existingJob);
+
             var job = new Job
             {
                 Id = Guid.NewGuid(),
                 Type = request.Type,
                 Payload = request.Payload,
+                IdempotencyKey = request.IdempotencyKey,
                 Status = JobStatus.Queued,
                 Attempts = 0,
                 MaxAttempts = 3,
@@ -30,13 +36,18 @@ namespace Api.Controllers
 
             _context.Job.Add(job);
 
-            await _context.SaveChangesAsync(cancellationToken);
-
-            return Ok(new
+            try
             {
-                job.Id,
-                job.Status
-            });
+                await _context.SaveChangesAsync(cancellationToken);
+            }
+            catch(DbUpdateException)
+            {
+                var existing = await _context.Job.FirstAsync(x => x.IdempotencyKey == request.IdempotencyKey);
+
+                return Ok(existing);
+            }
+
+            return Ok(job);
         }
 
         [HttpGet("{id:guid}")]

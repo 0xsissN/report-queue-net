@@ -13,6 +13,7 @@
                 using var scope = _scopeFactory.CreateScope();
 
                 var claimer = scope.ServiceProvider.GetRequiredService<JobClaimer>();
+                var processor = scope.ServiceProvider.GetRequiredService<JobProcessor>();
 
                 var job = await claimer.ClaimAsync(workerId, stoppingToken);
 
@@ -20,6 +21,16 @@
                 {
                     await Task.Delay(1000, stoppingToken);
                     continue;
+                }
+
+                try
+                {
+                    await processor.ProcessAsync(job, stoppingToken);
+                }
+                catch(Exception ex)
+                {
+                    Console.WriteLine($"Job {job.Id} failed: {ex.Message}");
+                    await claimer.RetryAsync(job, ex.Message, stoppingToken);
                 }
 
                 Console.WriteLine($"-----------------------Worker {workerId} claimed job {job.Id}");
