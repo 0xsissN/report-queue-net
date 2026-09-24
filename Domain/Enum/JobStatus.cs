@@ -5,6 +5,7 @@
         Queued,
         Processing,
         Completed,
-        Failed
+        Failed,
+        DeadLetter
     }
 }

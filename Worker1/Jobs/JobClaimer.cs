@@ -40,9 +40,10 @@ namespace Worker1.Jobs
         {
             if (job.Attempts >= job.MaxAttempts)
             {
-                job.Status = JobStatus.Failed;
+                job.Status = JobStatus.DeadLetter;
                 job.Error = error;
                 job.CompletedAt = DateTime.UtcNow;
+                job.AvailableAt = null;
             }
             else
             {
@@ -54,6 +55,30 @@ namespace Worker1.Jobs
             }
 
             await _context.SaveChangesAsync(cancellationToken);
+        }
+        public async Task<int> RecoverStaleJobsAsync(CancellationToken cancellationToken) 
+        {
+            var timeout = DateTime.UtcNow.AddSeconds(-30);
+
+            var jobs = await _context.Job
+                .Where(x =>
+                    x.Status == JobStatus.Processing &&
+                    x.LockedAt != null &&
+                    x.LockedAt < timeout
+                ).ToListAsync(cancellationToken);
+            
+            foreach(var job in jobs)
+            {
+                job.Status = JobStatus.Queued;
+                job.AvailableAt = DateTime.UtcNow;
+                job.LockedAt = null;
+                job.LockedBy = null;
+                job.StartedAt = null;
+            }
+
+            await _context.SaveChangesAsync(cancellationToken);
+
+            return jobs.Count;
         }
     }
 }

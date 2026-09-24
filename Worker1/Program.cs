@@ -1,6 +1,7 @@
 using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Worker1.Jobs;
+using Worker1.Recovery;
 
 var builder = Host.CreateApplicationBuilder(args);
 
@@ -12,6 +13,7 @@ builder.Services.AddScoped<JobClaimer>();
 builder.Services.AddScoped<JobProcessor>();
 
 builder.Services.AddHostedService<JobWorker>();
+builder.Services.AddHostedService<JobRecoveryWorker>();
 
 var host = builder.Build();
 

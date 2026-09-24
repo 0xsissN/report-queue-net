@@ -10,7 +10,7 @@ namespace Worker1.Jobs
 
             await Task.Delay(1000, cancellationToken);
 
-            Console.WriteLine($"Job {job.Id} processed successfully");
+            throw new Exception("Simulated processing failure");
         }
     }
 }
